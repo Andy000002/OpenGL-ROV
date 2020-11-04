@@ -1,4 +1,4 @@
-﻿#include <gl/glut.h>
+#include <gl/glut.h>
 #include <bits/stdc++.h>
 #define PI 3.1415926
 using namespace std;
@@ -7,45 +7,37 @@ float R = 30, r = 0, horizontal = 0, temphorizontal = 0, vertical = 0, tempverti
 float lookx = 0, looky = 0, lookz = R, movex = 0, movey = 0, movez = 0;
 float propellerangle = 0, theta = 0, ROVdirectionangle = 0;
 float perx = 0, pery = 0;
-float paw = 0, random = 0, random2 = 0, grassrandlocx[40] = { 0 }, grassrandlocz[40] = { 0 }, grassrandheight[40] = { 0 };
-float stonerandlocx[40] = { 0 }, stonerandlocz[40] = { 0 }, stonerandsize[40] = { 0 }, stonerandrotate[40] = { 0 };
+float paw = 0, random = 0, random2 = 0, grassrandlocx[400] = { 0 }, grassrandlocz[400] = { 0 }, grassrandheight[400] = { 0 }, grassrandcolor[400][3] = { 0 };
+float stonerandlocx[400] = { 0 }, stonerandlocz[40] = { 0 }, stonerandsize[40] = { 0 }, stonerandrotate[40] = { 0 },stonerandheight[40];
+float fishrandlocx[40] = { 0 }, fishrandlocz[40] = { 0 }, fishrandrotate[40], fishrandsize[40] = {0}, fishrandheight[40] = { 0 };
+float u = 0;
 
 void light() {
-	//定义光源的颜色和位置
 	GLfloat ambient[] = { 0.5, 0.8, 0.1, 0.1 };
 	GLfloat diffuse[] = { 1.0, 1.0, 1.0, 1.0 };
 	GLfloat position[] = { -80.0, 50.0, 25.0, 1.0 };
-	//选择光照模型
-	GLfloat lmodel_ambient[] = { 0.4, 0.4, 0.4, 1.0 };
+	GLfloat lmodel_ambient[] = { 0.2, 0.2, 0.2, 1.0 };
 	GLfloat local_view[] = { 0.0 };
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glShadeModel(GL_SMOOTH);
-	//设置环境光
 	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
-	//设置漫射光
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
-	//设置光源位置
 	glLightfv(GL_LIGHT0, GL_POSITION, position);
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
+	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 	glLightModelfv(GL_LIGHT_MODEL_LOCAL_VIEWER, local_view);
-	//启动光照
 	glEnable(GL_LIGHTING);
-	//启用光源
 	glEnable(GL_LIGHT0);
 }
-void Drawrectan(float ver[4][3],float col[3]) {
-	//Useless
-	glBegin(GL_POLYGON);
-	glColor3f(col[0], col[1], col[2]);
-	for (int i = 0; i < 4; i++) {
-		glVertex3f(ver[i][0], ver[i][1], ver[i][2]);
-	}
-	glEnd();
-}
+//World
 void Drawsea() {
-	//useless
-	glColor3f(0.117, 0.352, 0.666);
-	glutSolidSphere(1000, 10, 10);
+	glColor3f(10 / 255.0,148 / 255.0,245/255.0);
+	glutSolidSphere(10000, 10, 10);
+	glColor3f(30 / 255.0, 50 / 255.0, 60 / 255.0);
+	glPushMatrix();
+	glTranslatef(0, -8000, 0);
+	glutSolidCube(10000);
+	glPopMatrix();
 }
 void Drawworldxy() {
 	glPushMatrix();
@@ -84,18 +76,20 @@ void Drawgrass() {
 	glPointSize(20);
 	glPushMatrix();
 	glBegin(GL_LINES);
-	for (int count = 0; count < 40; count++) {
+	float j = 0;
+	for (int count = 0; count < 100; count++) {
 		float r1 = grassrandlocx[count];
 		float r2 = grassrandlocz[count];
-;		for (int i = 0; i <grassrandheight[count]; i ++) {
-			glVertex3f(r1, i,r2+5*cosf(random));
-			random += 0.1;
-			//random2 += 0.1;
-			glVertex3f(r1, i + 0.999,r2+5*cosf(random));
-			random += 0.1;
-		}
+		float temp = (float)(rand() % 1000) / 1000;
+		glColor3f(grassrandcolor[count][0], grassrandcolor[count][1], grassrandcolor[count][2]);
+			for (int i = 0; i <grassrandheight[count]; i +=1){
+				glVertex3f(r1, i, r2 + 2 * cos(j+random));
+				j += 30*PI/360;
+				glVertex3f(r1, i + 0.999, r2 + 2 * cos(j+random));
+			}
+		j += PI / 360;
 	}
-	cout << grassrandheight[0]<<" "<<grassrandlocx[0]<<" "<<grassrandlocz[0]<<endl;
+	//cout << grassrandheight[0]<<" "<<grassrandlocx[0]<<" "<<grassrandlocz[0]<<endl;
 	glEnd();
 	glPopMatrix();
 }
@@ -105,13 +99,29 @@ void Drawstone() {
 		glPushMatrix();
 		glRotated(stonerandrotate[i],0,1,0);
 		glTranslatef(stonerandlocx[i], 0, stonerandlocz[i]);
-		glutSolidCone(5,7,5,5);
+		glutSolidCone(stonerandheight[i],stonerandsize[i],5,5);
 		glPopMatrix();
 	}
 	
 }
 void Drawfish() {
 
+	for (int i = 0; i < 10;i++) {
+		glPushMatrix();
+		glTranslatef(fishrandlocx[i], fishrandheight[i], fishrandlocz[i]);
+		glRotatef(fishrandrotate[i], 0, 1, 0);
+
+		glPushMatrix();
+		glutSolidTeapot(fishrandsize[i]);
+		glPushMatrix();
+		glRotatef(180, 1, 0, 0);
+		glTranslatef(0, 0.1, 0);
+		glutSolidTeapot(fishrandsize[i]);
+		glPopMatrix();
+		glPopMatrix();
+
+		glPopMatrix();
+	}
 }
 void Drawworld() {
 	cout << "x: " << movex << " y: "<<-movey<<" z:" << movez << " velocity: "<<velocity<<"\n ";// << unitmovex << " " << unitmovez << " " << unitmovex / unitmovez << " " << movex / movez << "\n";
@@ -128,14 +138,16 @@ void Drawworld() {
 	else if (movez * velocity > 1000) {
 		movez = 999 / velocity;
 	}
-	
+	Drawsea();
 	glPushMatrix();
 	glTranslatef(movex * velocity, -1+movey*velocity, movez * velocity);
 	Drawflat();
 	Drawworldxy();
+	random += 3*PI/360;
 	Drawgrass();
 	Drawstone();
 	Drawfish();
+	light();
 	glPopMatrix();
 }
 void Draworigincube() {
@@ -181,6 +193,7 @@ void Drawxyz() {
 	glVertex3f(0, 0, 1000);
 	glEnd();
 }
+//ROV
 void Drawpropeller() {
 	glColor3f(0.196, 0.235, 0.313);
 	glPushMatrix();
@@ -289,7 +302,6 @@ void DrawROV() {
 	
 }
 void Draw() {
-	//Drawsea();
 	glPushMatrix();
 	glScalef(30 / R, 30 / R, 30 / R);
 	glRotatef(perx, 0, 1, 0);
@@ -298,24 +310,40 @@ void Draw() {
 	//Draworigincube();
 	DrawROV();
 	glPopMatrix();
-}
+};
+//Main
 void Init() {
 	glutSetCursor(GLUT_CURSOR_NONE);
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_COLOR_MATERIAL);
 	glClearColor(0.117, 0.352, 0.666,0);
 	srand(time(NULL));
 	random = rand();
 	random2 = rand();
-	for (int i = 0; i < 40; i++) {
+	for (int i = 0; i < 100; i++) {//grass
 		grassrandlocx[i] = rand() % 2000 - 1000;
 		grassrandlocz[i] = rand() % 2000 - 1000;
-		grassrandheight[i] = rand() % 40+1;
+		grassrandheight[i] = rand() % 1000+1;
+		for (int j = 0; j < 400; j++) {
+			grassrandcolor[i][0] = rand() % 255 / 255.0;
+			grassrandcolor[i][1] = rand() % 255 / 255.0;
+			grassrandcolor[i][2] = rand() %255 / 255.0;
+		}
+	}
+	for (int i = 0; i < 40; i++) {
 		stonerandlocx[i] = rand() % 2000 - 1000;
 		stonerandlocz[i] = rand() % 2000 - 1000;
-		stonerandsize[i] = rand() % 6+1;
+		stonerandsize[i] = rand() % 200 + 1;
+		stonerandheight[i] = rand() % 100 + 1;
 		stonerandrotate[i] = rand() % 360;
 	}
-	
+	for (int i = 0; i < 10; i++) {
+		fishrandlocx[i] = rand() % 1500 - 750;
+		fishrandlocz[i] = rand() % 1500 - 750;
+		fishrandsize[i] = rand() % 3 + 1;
+		fishrandheight[i] = rand() % 500 + 1;
+		fishrandrotate[i] = rand() % 360;
+	}
 	glutPostRedisplay();
 	//light();
 }
@@ -390,10 +418,14 @@ void Keyboard(unsigned char key,int x,int y) {
 			velocity -=  0.5 ;
 		}
 	}
+	else if (key == 't') {
+		u += 0.1;
+	}
+	else if (key == 'y') {
+		u -= 0.1;
+	}
 	//cout << velocityx << " " << velocityz <<" "<< movex * accelerate << endl;
 	glutPostRedisplay();
-}
-void Motion(int x,int y) {
 }
 void Mouse(int button, int state, int x, int y) {
 	//cout << "M: " << button << " " << state << "\n";
@@ -453,106 +485,8 @@ int main(int argc,char **argv) {
 	glutDisplayFunc(Display);
 	glutReshapeFunc(Reshape);
 	glutKeyboardFunc(Keyboard);
-	//glutMotionFunc(Motion);
 	glutMouseFunc(Mouse);
 	glutPassiveMotionFunc(Passmotion);
 	glutTimerFunc(7, timerProc, 1);//fps
 	glutMainLoop();
 }
-
-
-//void init() {
-//		//定义光源的颜色和位置
-//	GLfloat ambient[] = { 0.5, 0.8, 0.1, 0.1 };
-//	GLfloat diffuse[] = { 1.0, 1.0, 1.0, 1.0 };
-//	GLfloat position[] = { -80.0, 50.0, 25.0, 1.0 };
-//		//选择光照模型
-//	GLfloat lmodel_ambient[] = { 0.4, 0.4, 0.4, 1.0 };
-//	GLfloat local_view[] = { 0.0 };
-//	glClearColor(0.0, 0.0, 0.0, 0.0);
-//	glShadeModel(GL_SMOOTH);
-//		//设置环境光
-//	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
-//		//设置漫射光
-//	//glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
-//		//设置光源位置
-//	//glLightfv(GL_LIGHT0, GL_POSITION, position);
-//	//glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
-//	//glLightModelfv(GL_LIGHT_MODEL_LOCAL_VIEWER, local_view);
-//		//启动光照
-//	glEnable(GL_LIGHTING);
-//		//启用光源
-//	glEnable(GL_LIGHT0);
-//
-////画半球
-//void drawHalfBall(double R, double x, double y, double z, int MODE) {
-//	glPushMatrix();
-//	glTranslated(x, y, z);
-//	GLdouble eqn[4] = { 0.0, 1.0, 0.0, 0.0 };
-//	glClipPlane(GL_CLIP_PLANE0, eqn);
-//	glEnable(GL_CLIP_PLANE0);
-//	if (MODE == SOLID) {
-//		glutSolidSphere(R, 20, 20);
-//	}
-//	else if (MODE == WIRE) {
-//		glutWireSphere(R, 20, 20);
-//	}
-//	glDisable(GL_CLIP_PLANE0);
-//	glPopMatrix();
-//
-//void display(void) {
-//	//清除缓冲区颜色
-//	glClear(GL_COLOR_BUFFER_BIT);
-//	//定义白色
-//	glColor3f(1.0, 1.0, 1.0);
-//	//圆点放坐标中心
-//	glLoadIdentity();
-//	//从哪个地方看
-//	gluLookAt(-2.0, -1.0, 20.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-//	glPushMatrix();
-//	glRotated(spinX, 0, 1, 0);
-//	glRotated(spinY, 1, 0, 0);
-//	glTranslated(0, 0, des);
-//	//头
-//	drawBall(2, 0, 1, 0, SOLID);
-//	//身体
-//	drawSkewed(5, 4.4, 4, 0, -0.75, 0, SOLID);
-//	//肩膀
-//	drawHalfBall(1, 3.5, -2.1, 0, SOLID);
-//	drawHalfBall(1, -3.5, -2.1, 0, SOLID);
-//	//胳膊
-//	drawSkewed(1, 3, 1, 3.5, -1.3, 0, SOLID);
-//	drawSkewed(1, 3, 1, -3.5, -1.3, 0, SOLID);
-//	//手
-//	drawBall(1, 3.5, -6.4, 0, SOLID);
-//	drawBall(1, -3.5, -6.4, 0, SOLID);
-//	//腿
-//	drawSkewed(1.2, 3, 2, 1, -2.4, 0, SOLID);
-//	drawSkewed(1.2, 3, 2, -1, -2.4, 0, SOLID);
-//	//脚
-//	drawSkewed(1.5, 1, 3, 0.9, -9.2, 0, SOLID);
-//	drawSkewed(1.5, 1, 3, -0.9, -9.2, 0, SOLID);
-//	glPopMatrix();
-//	glutSwapBuffers();
-//}
-////鼠标点击事件
-//void mouseClick(int btn, int state, int x, int y) {
-//	moveX = x;
-//	moveY = y;
-//	GLfloat ambient[] = { (float)rand() / RAND_MAX, (float)rand() / RAND_MAX, (float)rand() / RAND_MAX, 0.1 };
-//	//设置环境光
-//	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
-//	//启用光源
-//	glEnable(GL_LIGHT0);
-//}
-//void reshape(int w, int h) {
-//	//定义视口大小
-//	glViewport(0, 0, (GLsizei)w, (GLsizei)h);
-//	//投影显示
-//	glMatrixMode(GL_PROJECTION);
-//	//坐标原点在屏幕中心
-//	glLoadIdentity();
-//	//操作模型视景
-//	gluPerspective(60.0, (GLfloat)w / (GLfloat)h, 1.0, 20.0);
-//	glMatrixMode(GL_MODELVIEW);
-//}
